@@ -124,13 +124,26 @@ function verProductos(req,res){
     }
 }
 
+function verStock(req,res){
+    var nomProd = req.body.producto;
+    if (req.user.rol == 'Rol_Admin') {
+        Productos.find({producto: nomProd},(err, productosEncontrados)=>{
+            if (err) return res.status(500).send({ mensaje: "Error en la peticion" });
+            if (!productosEncontrados) return res.status(400).send({ mensaje: "Error al cargar los productos" });
+            return res.status(200).send({ stock: productosEncontrados[0].stock });
+        })        
+    } else {
+        return res.status(500).send({ mensaje: "No esta Autorizado" });
+    }
+}
+
 function buscarPorNombre(req,res){
     var nomProd = req.body.producto;
     if (req.user.rol == 'Rol_Admin' || req.user.rol =='Rol_Cliente') {
         Productos.find({producto: nomProd},(err, productosEncontrados)=>{
             if (err) return res.status(500).send({ mensaje: "Error en la peticion" });
             if (!productosEncontrados) return res.status(400).send({ mensaje: "Error al cargar los productos" });
-            return res.status(200).send({ categoria: productosEncontrados });
+            return res.status(200).send({ productos: productosEncontrados });
         })        
     } else {
         return res.status(500).send({ mensaje: "No esta Autorizado" });
@@ -147,7 +160,7 @@ function buscarPorCategoria(req,res){
             Productos.find({categoria: nomCat},(err, productosEncontrados)=>{
                 if (err) return res.status(500).send({ mensaje: "Error en la peticion" });
                 if (!productosEncontrados) return res.status(400).send({ mensaje: "Error al cargar las categorias" });
-                return res.status(200).send({ categoria: productosEncontrados });
+                return res.status(200).send({ productos: productosEncontrados });
             })
         })        
     } else {
@@ -163,5 +176,6 @@ module.exports={
     editarProducto,
     eliminarProducto,
     verProductos,
-    editarStock
+    editarStock,
+    verStock
 }

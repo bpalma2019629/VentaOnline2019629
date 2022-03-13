@@ -238,6 +238,50 @@ function agregarProductoCarrito(req,res){
     }
 }
 
+//Eliminar del carrito
+function eliminarProductoCarrito(req,res){
+    const parametros = req.body;
+    var totalCarritoLocal = 0;
+
+    if (req.user.rol == 'Rol_Cliente') {
+        Productos.findOne({producto: parametros.nombreProducto}, (err, productoEncontrado)=>{
+            if(err) return res.status(404).send({mensaje: 'Eror en la peticion'});
+            if(!productoEncontrado) return res.status(500).send({mensaje:'Error al obtener el producto'});
+                Usuarios.findOne({_id:req.user.sub, carrito:{$elemMatch: {nombreProducto: parametros.nombreProducto}}}, (err, carritoExistente)=>{
+                    if(err) return res.status(500).send({mensaje: "Error en la peticion"});
+                    if(!carritoExistente){
+                        return res.status(500).send({mensaje: 'Este Producto no existe en el carrito'});
+                    }else{
+                        for(let i=0; i<carritoExistente.carrito.length; i++){
+                            if(carritoExistente.carrito[i].nombreProducto == parametros.nombreProducto){ 
+                                Usuarios.findOneAndUpdate({carrito:{$elemMatch:{_id:carritoExistente.carrito[i]._id}}},{$pull:{carrito:{_id:carritoExistente.carrito[i]._id}}}, {new: true},
+                                    (err, productoEliminado)=>{
+                                        if(err) return res.status(404).send({mensaje: 'Eror en la peticion del Usuario'});
+                                        if(!productoEliminado) return res.status(500).send({mensaje:'Error al actualizar el carrito'});
+                            
+                    
+                                        for(let i=0; i<productoEliminado.carrito.length; i++){
+                                            totalCarritoLocal += productoEliminado.carrito[i].subTotal;
+                                        }
+                                
+                                        Usuarios.findByIdAndUpdate(req.user.sub, {totalCarrito: totalCarritoLocal},{new:true},
+                                            (err, totalEditado)=>{
+                                                if(err) return res.status(500).send({mensaje:'Error en la peticion de total Carrito'});
+                                                if(!totalEditado) return res.status(500).send({mensaje: 'Error al modificar el total del carrito'});
+                                                return res.status(200).send({usuario: totalEditado});
+                                            })
+                                })
+                            }else{
+                                
+                            }
+                        }
+                    }
+                })
+        })
+    } else {
+        return res.status(500).send({ mensaje: "No esta Autorizado para eliminar un producto" });
+    }
+}
 
 //Exports
 module.exports={
@@ -247,6 +291,7 @@ module.exports={
     RegistrarCliente,
     UsuarioInicial,
     agregarUsuario,
-    agregarProductoCarrito
+    agregarProductoCarrito,
+    eliminarProductoCarrito
 }
 
