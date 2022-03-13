@@ -44,6 +44,7 @@ function editarProducto(req,res){
     if (req.user.rol == 'Rol_Admin') {
         if(parametros.categoria){
             Categorias.find({categoria: parametros.categoria}, (err, categoriaEncontrada)=> {
+                if(err) return res.status(500).send({mensaje:'Error en la peticion'}); 
                 if (!categoriaEncontrada) return res.status(400).send({ mensaje: "Error al encontrar la categoria" });
                 parametros.categoria = categoriaEncontrada[0]._id;
                 Productos.findByIdAndUpdate(idProd, parametros ,{new:true}, (err, productoEditado) =>{
